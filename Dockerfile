@@ -71,30 +71,21 @@ COPY --from=0 /usr/local/pgsql .
 RUN apk add libxml2 icu openssl libuuid \
   && apk add ossp-uuid --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 
-# Create babelfish user
-RUN addgroup -S babelfish && adduser -S babelfish -G babelfish
+# Create postgres user
+RUN addgroup -S postgres && adduser -S postgres -G postgres
+
+# Enable data volume
 RUN mkdir /data
-RUN chown babelfish /data
+VOLUME /data
+RUN mkdir /data/postgres
+RUN chown postgres /data/postgres
 
-# Switch to babelfish user
-USER babelfish
+# Change to postgres user
+USER postgres
 
-# Initialize database
-WORKDIR /usr/local/pgsql/bin
+# Expose ports
+EXPOSE 1433 5432
 
-RUN echo babelfish > $HOME/defaultpw.txt
-RUN ./initdb -D /data -A md5 --pwfile=$HOME/defaultpw.txt
-RUN rm $HOME/defaultpw.txt
-
-# Configure network connections
-RUN printf "# Allow all connections\nhost\tall\t\tall\t\t0.0.0.0/0\t\tmd5\nhost\tall\t\tall\t\t::0/0\t\t\tmd5\n" >> /data/pg_hba.conf
-
-# Configure babelfish support
-RUN printf "\n# Configure babelfish\nshared_preload_libraries = 'babelfishpg_tds'\n" >> /data/postgresql.conf
-
-# Open ports
-EXPOSE 1433/tcp
-EXPOSE 5432/tcp
-
-# Run babelfish
-CMD [ "./postgres", "-D", "/data", "-i" ]
+# Set start command
+ADD start.sh /
+CMD [ "/start.sh" ]
