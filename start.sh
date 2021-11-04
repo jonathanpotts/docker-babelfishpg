@@ -3,7 +3,7 @@
 cd /usr/local/pgsql/bin
 
 # Initialize database cluster if it does not exist
-[ ! -e /data/babelfish ] && ./initdb -D /data/postgres \
+[ ! -f /data/postgres/postgresql.conf ] && ./initdb -D /data/postgres \
   && printf "# Allow all connections\nhost\tall\t\tall\t\t0.0.0.0/0\t\tmd5\nhost\tall\t\tall\t\t::0/0\t\t\tmd5\n" >> /data/postgres/pg_hba.conf \
   && printf "\n# Configure babelfish\nshared_preload_libraries = 'babelfishpg_tds'\n" >> /data/postgres/postgresql.conf \
   && ./pg_ctl -D /data/postgres start \
