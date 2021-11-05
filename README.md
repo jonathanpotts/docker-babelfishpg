@@ -9,14 +9,55 @@ To create a new container, run:
 
 `docker run -d -p 1433:1433 jonathanpotts/babelfishpg`
 
+### Example Data
+
+Use the [example_data.sql](https://github.com/jonathanpotts/docker-babelfishpg/blob/main/example_data.sql) script to populate the database with example data.
+
+You can then query the database using commands such as:
+
+```sql
+SELECT * FROM example_db.authors;
+```
+
+```sql
+SELECT * FROM example_db.books;
+```
+
+### Advanced Setup
+
+To initialize with a custom username, append `-u my_username` to the `docker run` command where `my_username` is the username desired.
+
+To initialize with a custom password, append `-p my_password` to the `docker run` command where `my_password` is the password desired.
+
+To initialize with a custom database name, append `-d my_database` to the `docker run` command where `my_database` is the database name desired. **This is the name of the database that Babelfish for PostgreSQL uses internally to store the data and is not accessible via TDS.**
+
+#### Migration Mode
+
+By default, the `single-db` migration mode is used.
+To use a different migration mode, append `-m migration_mode` to the `docker run` command where `migration_mode` is the value for the migration mode desired.
+
+For more information about migration modes, see [Single vs. multiple instances](https://babelfishpg.org/docs/installation/single-multiple/).
+
 ## Connecting
+
+If you are hosting the container on your local machine, the server name is `localhost`. Otherwise, use the IP address or DNS-backed fully qualified domain name (FQDN) for the server you are hosting the container on.
+
+Use SQL Server Authentication mode for login.
 
 The default login for Babelfish is:
 
 * **Username:** `babelfish_user`
 * **Password:** `12345678`
 
+If you specified a custom username and/or password, use those instead.
+
 Babelfish does not currently support the SSMS Object Explorer. If you are using SSMS, you must connect via a **New Query**.
+
+### Connection string
+
+Assuming Babelfish is hosted on the local machine, using the default settings, and you are trying to connect to a database named `example_db`, the connection string is:
+
+`Data Source=localhost;Initial Catalog=example_db;Persist Security Info=true;User ID=babelfish_user;Password=12345678`
 
 ## Data Volume
 

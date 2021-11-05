@@ -86,6 +86,6 @@ USER postgres
 # Expose ports
 EXPOSE 1433 5432
 
-# Set start command
+# Set entry point
 ADD start.sh /
-CMD [ "/start.sh" ]
+ENTRYPOINT [ "/start.sh" ]
