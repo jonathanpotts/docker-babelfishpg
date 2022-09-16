@@ -5,6 +5,8 @@ Babelfish for PostgreSQL is a collection of [extensions](https://github.com/babe
 
 ## Quick Start
 
+**WARNING: Make sure to create a database dump to backup your data before installing a new image to prevent risk of data loss when changing images.**
+
 To create a new container, run:
 
 `docker run -d -p 1433:1433 jonathanpotts/babelfishpg`
