@@ -51,7 +51,7 @@ The default login for Babelfish is:
 
 If you specified a custom username and/or password, use those instead.
 
-Babelfish does not currently support the SSMS Object Explorer. If you are using SSMS, you must connect via a **New Query**.
+Many features in SQL Server Management Studio (SSMS) are currently unsupported.
 
 ### Connection string
 

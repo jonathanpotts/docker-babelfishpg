@@ -11,7 +11,7 @@ CREATE TABLE example_db.authors (
 	[name] NVARCHAR (MAX) NOT NULL,
 );
 
-CREATE TABLE example_db.Books (
+CREATE TABLE example_db.books (
 	book_id INT IDENTITY PRIMARY KEY,
 	title NVARCHAR (MAX) NOT NULL,
 	author_id INT NOT NULL,
@@ -23,8 +23,8 @@ GO
 
 -- Seed tables
 INSERT INTO example_db.authors ([name]) VALUES
-		('Kristin Hannah'),
-		('Andy Weir');
+  ('Kristin Hannah'),
+  ('Andy Weir');
 
 INSERT INTO example_db.books (title, author_id, publish_date, price) VALUES
 	('The Four Winds', 1, '02-02-2021 00:00:00', 14.99),

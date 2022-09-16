@@ -1,84 +1,119 @@
 # Build stage
-FROM alpine:latest
+FROM ubuntu:20.04
+ARG BABELFISH_VERSION=BABEL_2_1_1__PG_14_3
+ENV DEBIAN_FRONTEND=noninteractive
+ENV BABELFISH_HOME=/opt/babelfish
 
 # Install build dependencies
-RUN apk add git icu-dev libxml2-dev openssl openssl-dev python3-dev openjdk8-jre pkgconf \
-  perl g++ gcc libc-dev linux-headers make cmake bison flex util-linux-dev \
-  && apk add libpq-dev --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main \
-  && apk add ossp-uuid-dev --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+RUN apt update && apt install -y --no-install-recommends \
+	build-essential flex libxml2-dev libxml2-utils \
+	libxslt-dev libssl-dev libreadline-dev zlib1g-dev \
+	libldap2-dev libpam0g-dev gettext uuid uuid-dev \
+	cmake lld apt-utils libossp-uuid-dev gnulib bison \
+	xsltproc icu-devtools libicu66 \
+	libicu-dev gawk \
+	curl openjdk-8-jre openssl \
+	g++ libssl-dev python-dev libpq-dev \
+	pkg-config libutfcpp-dev \
+	gnupg unixodbc-dev net-tools unzip wget
 
-# Clone babelfish sources
+# Download babelfish sources
 WORKDIR /workplace
 
-RUN git clone https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git \
-  && git clone https://github.com/babelfish-for-postgresql/babelfish_extensions.git
+RUN wget https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/releases/download/${BABELFISH_VERSION}/${BABELFISH_VERSION}.tar.gz
 
-# Build Postgres engine
-WORKDIR /workplace/postgresql_modified_for_babelfish
+RUN tar -xvzf ${BABELFISH_VERSION}.tar.gz
 
-RUN ./configure --without-readline --without-zlib --enable-debug CFLAGS="-ggdb" \
-  --with-libxml --with-uuid=ossp --with-icu
+# Set environment variables
+ENV PG_SRC=/workplace/${BABELFISH_VERSION}
 
-RUN make && make install
+WORKDIR ${PG_SRC}
 
-WORKDIR /workplace/postgresql_modified_for_babelfish/contrib
+ENV PG_CONFIG=${BABELFISH_HOME}/bin/pg_config
 
-RUN make && make install
+# Compile ANTLR 4
+ENV ANTLR4_VERSION=4.9.3
+ENV ANTLR4_JAVA_BIN=/usr/bin/java
+ENV ANTLR4_RUNTIME_LIBRARIES=/usr/include/antlr4-runtime
+ENV ANTLR_EXECUTABLE=/usr/local/lib/antlr-${ANTLR4_VERSION}-complete.jar
+ENV ANTLR_RUNTIME=/workplace/antlr4
 
-# Build antlr4
-WORKDIR /workplace/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
-
-RUN cp antlr-4.9.2-complete.jar /usr/local/lib
+RUN cp ${PG_SRC}/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr-${ANTLR4_VERSION}-complete.jar /usr/local/lib
 
 WORKDIR /workplace
 
-RUN wget http://www.antlr.org/download/antlr4-cpp-runtime-4.9.2-source.zip
-RUN unzip -d antlr4 antlr4-cpp-runtime-4.9.2-source.zip
-RUN mkdir antlr4/build
+RUN wget http://www.antlr.org/download/antlr4-cpp-runtime-${ANTLR4_VERSION}-source.zip
+RUN unzip -d ${ANTLR_RUNTIME} antlr4-cpp-runtime-${ANTLR4_VERSION}-source.zip
 
-WORKDIR /workplace/antlr4/build
+WORKDIR ${ANTLR_RUNTIME}/build
 
-RUN cmake .. -DANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.2-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
-RUN make && make install
-RUN cp /usr/local/lib/libantlr4-runtime.so.4.9.2 /usr/local/pgsql/lib
-
-# Set environment variables for building extensions
-ENV PG_CONFIG=/usr/local/pgsql/bin/pg_config
-ENV PG_SRC=/workplace/postgresql_modified_for_babelfish
-ENV cmake=/usr/bin/cmake
-
-# Build extensions
-WORKDIR /workplace/babelfish_extensions/contrib/babelfishpg_money
+RUN cmake .. -D ANTLR_JAR_LOCATION=/usr/local/lib/antlr-${ANTLR4_VERSION}-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
 RUN make && make install
 
-WORKDIR /workplace/babelfish_extensions/contrib/babelfishpg_common
+# Build modified PostgreSQL for Babelfish
+WORKDIR ${PG_SRC}
+
+RUN ./configure CFLAGS="-ggdb" \
+	--prefix=${BABELFISH_HOME}/ \
+	--enable-debug \
+	--with-ldap \
+	--with-libxml \
+	--with-pam \
+	--with-uuid=ossp \
+	--enable-nls \
+	--with-libxslt \
+	--with-icu
+					
+RUN make DESTDIR=${BABELFISH_HOME}/ 2>error.txt && make install
+
+WORKDIR ${PG_SRC}/contrib
+
 RUN make && make install
 
-WORKDIR /workplace/babelfish_extensions/contrib/babelfishpg_tds
-RUN make && make install
+# Compile the ANTLR parser generator
+RUN cp /usr/local/lib/libantlr4-runtime.so.${ANTLR4_VERSION} ${BABELFISH_HOME}/lib
+					 
+WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql/antlr 
+RUN cmake -Wno-dev .
+RUN make all
 
-WORKDIR /workplace/babelfish_extensions/contrib/babelfishpg_tsql
-RUN make && make install
+# Compile the contrib modules and build Babelfish
+WORKDIR ${PG_SRC}/contrib/babelfishpg_common
+RUN make && make PG_CONFIG=${PG_CONFIG} install
+
+WORKDIR ${PG_SRC}/contrib/babelfishpg_money
+RUN make && make PG_CONFIG=${PG_CONFIG} install
+
+WORKDIR ${PG_SRC}/contrib/babelfishpg_tds
+RUN make && make PG_CONFIG=${PG_CONFIG} install
+
+WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql
+RUN make && make PG_CONFIG=${PG_CONFIG} install
 
 # Run stage
-FROM alpine:latest
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND=noninteractive
+ENV BABELFISH_HOME=/opt/babelfish
 
 # Copy binaries to run stage
-WORKDIR /usr/local/pgsql
-COPY --from=0 /usr/local/pgsql .
+WORKDIR ${BABELFISH_HOME}
+COPY --from=0 ${BABELFISH_HOME} .
 
 # Install runtime dependencies
-RUN apk add libxml2 icu openssl libuuid \
-  && apk add ossp-uuid --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
-
-# Create postgres user
-RUN addgroup -S postgres && adduser -S postgres -G postgres
+RUN apt update && apt install -y --no-install-recommends \
+	libssl1.1 openssl libldap-2.4-2 libxml2 libpam0g uuid libossp-uuid16 \
+	libxslt1.1 libicu66 libpq5 unixodbc
 
 # Enable data volume
+ENV BABELFISH_DATA=/data/babelfish
 RUN mkdir /data
 VOLUME /data
-RUN mkdir /data/postgres
-RUN chown postgres /data/postgres
+RUN mkdir ${BABELFISH_DATA}
+
+# Create postgres user
+RUN adduser postgres --home ${BABELFISH_DATA}
+RUN chown postgres ${BABELFISH_DATA}
+RUN chmod 750 ${BABELFISH_DATA}
 
 # Change to postgres user
 USER postgres
