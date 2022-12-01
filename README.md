@@ -76,4 +76,4 @@ To use a different Babelfish version, you can:
  * **-or-**
  * Run `docker build . --build-arg BABELFISH_VERSION=<BABELFISH_VERSION_TAG>`
 
-Using the desired version tag from [babelfish-for-postgresql tags](https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags).
+The Babelfish version tags are listed at https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags.
