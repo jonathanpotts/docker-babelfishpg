@@ -1,6 +1,9 @@
 # Build stage
 FROM ubuntu:20.04
-ARG BABELFISH_VERSION=BABEL_2_1_1__PG_14_3
+
+# Specify babelfish version by using a tag from https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags
+ARG BABELFISH_VERSION=BABEL_2_2_0__PG_14_5
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV BABELFISH_HOME=/opt/babelfish
 
@@ -122,5 +125,5 @@ USER postgres
 EXPOSE 1433 5432
 
 # Set entry point
-ADD start.sh /
+COPY start.sh /
 ENTRYPOINT [ "/start.sh" ]
