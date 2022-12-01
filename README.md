@@ -64,3 +64,16 @@ Assuming Babelfish is hosted on the local machine, using the default settings, a
 ## Data Volume
 
 Database data is stored in the `/data` volume.
+
+## Building Docker Image
+
+**NOTE: Because Git on Windows changes line-endings from LF to CRLF by default, make sure that `start.sh` has LF line-endings before building or an error will occur when running a container from the image.**
+
+To build the Docker image, clone the repository and then run `docker build .`.
+
+To use a different Babelfish version, you can:
+ * Change `ARG BABELFISH_VERSION=<BABELFISH_VERSION_TAG>` in the `Dockerfile`
+ * **-or-**
+ * Run `docker build . --build-arg BABELFISH_VERSION=<BABELFISH_VERSION_TAG>`
+
+Using the desired version tag from [babelfish-for-postgresql tags](https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags).
