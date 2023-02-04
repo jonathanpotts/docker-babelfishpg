@@ -69,7 +69,7 @@ Database data is stored in the `/data` volume.
 
 **NOTE: Because Git on Windows changes line-endings from LF to CRLF by default, make sure that `start.sh` has LF line-endings before building or an error will occur when running a container from the image.**
 
-**NOTE: On Linux (and probably Unix/macOS), you need to `chmod +x start.sh` prior to building. (Credit to: [calmitchell617](https://github.com/calmitchell617))**
+**NOTE: On Linux (and probably Unix/macOS), you may need to `chmod +x start.sh` prior to building. (Credit to: [calmitchell617](https://github.com/calmitchell617))**
 
 To build the Docker image, clone the repository and then run `docker build .`.
 
