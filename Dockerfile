@@ -2,7 +2,7 @@
 FROM ubuntu:20.04
 
 # Specify babelfish version by using a tag from https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags
-ARG BABELFISH_VERSION=BABEL_2_2_0__PG_14_5
+ARG BABELFISH_VERSION=BABEL_2_3_0__PG_14_6
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV BABELFISH_HOME=/opt/babelfish
