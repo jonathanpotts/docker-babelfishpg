@@ -40,6 +40,21 @@ To use a different migration mode, append `-m migration_mode` to the `docker run
 
 For more information about migration modes, see [Single vs. multiple instances](https://babelfishpg.org/docs/installation/single-multiple/).
 
+#### Encryption (SSL) Support
+
+Starting with the `2.3.0` image pushed on Mar 4, 2023, encryption (SSL) support has been added to the image. You will need to configure PostgreSQL to use SSL; for instructions, see [Secure TCP/IP Connections with SSL](https://www.postgresql.org/docs/14/ssl-tcp.html).
+
+As a very basic example, to enable encryption with a *self-signed* certificate that *expires in 365 days* and has a *subject of localhost*, in the container's terminal run the following commands:
+
+```sh
+cd /data/babelfish
+openssl req -new -x509 -days 365 -nodes -text -out server.crt -keyout server.key -subj "/CN=localhost"
+chmod og-rwx server.key
+echo "ssl = on" >> postgresql.conf
+```
+
+Then restart the container and encryption support should be enabled.
+
 ## Connecting
 
 If you are hosting the container on your local machine, the server name is `localhost`. Otherwise, use the IP address or DNS-backed fully qualified domain name (FQDN) for the server you are hosting the container on.
