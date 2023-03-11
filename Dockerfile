@@ -124,12 +124,14 @@ RUN apt update && apt install -y --no-install-recommends\
 # Enable data volume
 ENV BABELFISH_DATA=/data/babelfish
 RUN mkdir /data
-VOLUME /data
 RUN mkdir ${BABELFISH_DATA}
 
+# Create postgres group
+RUN groupadd -f --gid 999 postgres
+
 # Create postgres user
-RUN adduser postgres --home ${BABELFISH_DATA}
-RUN chown postgres ${BABELFISH_DATA}
+RUN useradd --gid 999 --uid 999 --home ${BABELFISH_DATA} postgres
+RUN chown -R postgres:postgres ${BABELFISH_DATA}
 RUN chmod 750 ${BABELFISH_DATA}
 
 # Change to postgres user
