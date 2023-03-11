@@ -3,7 +3,7 @@ name: Docker Image CI
 on:
   workflow_dispatch:
 
-jobs: Publish Babelfish Docker Package
+jobs:
 
   build:
     runs-on: ubuntu-latest
