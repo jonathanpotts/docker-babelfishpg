@@ -20,6 +20,6 @@ jobs:
 
       - name: Build the Docker image
         run: |
-          docker build . --tag ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
-          docker run ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
-          docker push ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
+          docker build . --tag ghcr.io/lindsay-mathieson/docker-babelfishpg:latest
+          docker run ghcr.io/lindsay-mathieson/docker-babelfishpg:latest
+          docker push ghcr.io/lindsay-mathieson/docker-babelfishpg:latest
