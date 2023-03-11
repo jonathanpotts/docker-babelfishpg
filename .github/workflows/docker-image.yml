@@ -8,24 +8,23 @@ on:
   workflow_dispatch:
 
 
-jobs:
+jobs: Publish Babelfish Docker Package
 
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
-      with:
-      registry: ghcr.io
-      username: ${{ github.actor }}
-      password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build the Docker image
-      run: |
-        docker build . --tag ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
-        docker run ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
-        docker push ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
+      - name: Build the Docker image
+        run: |
+          docker build . --tag ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
+          docker run ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
+          docker push ghcr.io/Lindsay-Mathieson/docker-babelfishpg:latest
