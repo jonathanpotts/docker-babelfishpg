@@ -19,7 +19,7 @@ RUN apt update && apt install -y --no-install-recommends\
 	curl openjdk-8-jre openssl\
 	g++ libssl-dev python-dev libpq-dev\
 	pkg-config libutfcpp-dev\
-	gnupg unixodbc-dev net-tools unzip wget
+	gnupg unixodbc-dev net-tools unzip wget python3-dev
 
 # Download babelfish sources
 WORKDIR /workplace
@@ -78,7 +78,8 @@ RUN ./configure CFLAGS="-ggdb"\
 	--enable-nls\
 	--with-libxslt\
 	--with-icu\
-	--with-openssl
+	--with-openssl\
+	--with-python
 					
 RUN make DESTDIR=${BABELFISH_HOME}/ 2>error.txt && make install
 
@@ -119,7 +120,7 @@ COPY --from=0 ${BABELFISH_HOME} .
 # Install runtime dependencies
 RUN apt update && apt install -y --no-install-recommends\
 	libssl1.1 openssl libldap-2.4-2 libxml2 libpam0g uuid libossp-uuid16\
-	libxslt1.1 libicu66 libpq5 unixodbc
+	libxslt1.1 libicu66 libpq5 unixodbc python3-dev
 
 # Enable data volume
 ENV BABELFISH_DATA=/data/babelfish
