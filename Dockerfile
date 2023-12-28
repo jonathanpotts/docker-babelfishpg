@@ -3,7 +3,10 @@ FROM ubuntu:20.04
 
 # Specify babelfish version by using a tag from:
 # https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags
-ARG BABELFISH_VERSION=BABEL_2_3_0__PG_14_6
+ARG BABELFISH_VERSION=BABEL_3_2_0__PG_15_3
+
+# Specify PostGIS version
+ARG POSTGIS_VERSION=3.4.1
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV BABELFISH_HOME=/opt/babelfish
@@ -32,8 +35,18 @@ ENV BABELFISH_FILE=${BABELFISH_VERSION}.tar.gz
 RUN wget ${BABELFISH_URL}/releases/download/${BABELFISH_TAG}/${BABELFISH_FILE}
 RUN tar -xvzf ${BABELFISH_FILE}
 
+# Download PostGIS source
+WORKDIR /workplace/postgis
+
+ENV POSTGIS_TAG=postgis-${POSTGIS_VERSION}
+ENV POSTGIS_FILE=${POSTGIS_TAG}.tar.gz
+
+RUN wget https://download.osgeo.org/postgis/source/${POSTGIS_FILE}
+RUN tar -xvzf ${POSTGIS_FILE}
+
 # Set environment variables
 ENV PG_SRC=/workplace/${BABELFISH_VERSION}
+ENV POSTGIS_SRC=/workplace/postgis/${POSTGIS_TAG}
 
 WORKDIR ${PG_SRC}
 
@@ -107,6 +120,15 @@ RUN make && make PG_CONFIG=${PG_CONFIG} install
 WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql
 RUN make && make PG_CONFIG=${PG_CONFIG} install
 
+# Compile PostGIS
+RUN apt install -y --no-install-recommends\
+	libproj-dev libgeos-dev libjson-c-dev libgdal-dev\
+	libprotobuf-c-dev protobuf-c-compiler
+
+WORKDIR ${POSTGIS_SRC}
+RUN ./configure
+RUN make && make install
+
 # Run stage
 FROM ubuntu:20.04
 ENV DEBIAN_FRONTEND=noninteractive
@@ -120,6 +142,11 @@ COPY --from=0 ${BABELFISH_HOME} .
 RUN apt update && apt install -y --no-install-recommends\
 	libssl1.1 openssl libldap-2.4-2 libxml2 libpam0g uuid libossp-uuid16\
 	libxslt1.1 libicu66 libpq5 unixodbc
+
+# Install PostGIS dependencies
+RUN apt install -y --no-install-recommends\
+	libproj15 libgeos-c1v5 libjson-c4 libgdal26\
+	libprotobuf-c1
 
 # Enable data volume
 ENV BABELFISH_DATA=/data/babelfish

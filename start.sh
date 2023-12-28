@@ -43,6 +43,7 @@ if [ ! -f ${BABELFISH_DATA}/postgresql.conf ]; then
 		-c "DROP DATABASE IF EXISTS ${DATABASE};" \
 		-c "CREATE DATABASE ${DATABASE} OWNER ${USERNAME};" \
 		-c "\c ${DATABASE}" \
+		-c "CREATE EXTENSION postgis;" \
 		-c "CREATE EXTENSION IF NOT EXISTS \"babelfishpg_tds\" CASCADE;" \
 		-c "GRANT ALL ON SCHEMA sys to ${USERNAME};" \
 		-c "ALTER USER ${USERNAME} CREATEDB;" \
