@@ -94,3 +94,11 @@ To use a different Babelfish version, you can:
  * Run `docker build . --build-arg BABELFISH_VERSION=<BABELFISH_VERSION_TAG>`
 
 The Babelfish version tags are listed at https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags.
+
+## Other Extensions
+
+Adding other extensions is outside of the scope of this project. They may not be able to be used through Babelfish and may cause issues with the Babelfish extensions or not work as expected.
+
+To address previous extension request issues, I have created branches for the `plpython3u` and `postgis` extensions. You can use them as examples for making modifications to add extensions you may need.
+
+Future issues requesting that extensions be added to this project will most likely be closed.
