@@ -24,16 +24,36 @@ jobs:
         echo "babelfish_tag=$BABELFISH_TAG" >> $GITHUB_OUTPUT
         echo "Latest Babelfish release: $BABELFISH_TAG"
 
-    - name: Build Docker image
-      run: docker build . -t jonathanpotts/babelfishpg:latest --build-arg BABELFISH_VERSION=${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+    - name: Setup QEMU
+      uses: docker/setup-qemu-action@v3
 
-    - name: Tag Docker image
-      run: docker tag jonathanpotts/babelfishpg:latest jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Login to Docker Hub
-      run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
 
-    - name: Push Docker image to Docker Hub
-      run: |
-        docker push jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
-        docker push jonathanpotts/babelfishpg:latest
+    - name: Build and Push Docker image (x64)
+      uses: docker/build-push-action@v5
+      with:
+        platforms: linux/amd64
+        tags: |
+          jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+          jonathanpotts/babelfishpg:latest
+        build-args:
+          BABELFISH_VERSION=${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+        push: true
+
+    - name: Build and Push Docker image (ARM64)
+      uses: docker/build-push-action@v5
+      with:
+        platforms: linux/arm64/v8
+        tags: |
+          jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+          jonathanpotts/babelfishpg:latest
+        build-args:
+          BABELFISH_VERSION=${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+        push: true
