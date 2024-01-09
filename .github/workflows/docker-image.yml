@@ -1,0 +1,39 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Get latest release tag for Babelfish
+      id: get_babelfish_latest
+      run: |
+        BABELFISH_TAG=$(curl -s https://api.github.com/repos/babelfish-for-postgresql/babelfish-for-postgresql/releases/latest | jq -r '.tag_name')
+        echo "babelfish_tag=$BABELFISH_TAG" >> $GITHUB_OUTPUT
+        echo "Latest Babelfish release: $BABELFISH_TAG"
+
+    - name: Build Docker image
+      run: docker build . -t jonathanpotts/babelfishpg:latest --build-arg BABELFISH_VERSION=${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+
+    - name: Tag Docker image
+      run: docker tag jonathanpotts/babelfishpg:latest jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+        docker push jonathanpotts/babelfishpg:latest

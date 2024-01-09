@@ -1,0 +1,56 @@
+name: Build and Push Babelfish Updates
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+
+  check:
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      babelfish_tag: ${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+      dockerhub_tag_exists: ${{ steps.check_dockerhub_tag.outputs.dockerhub_tag_exists }}
+
+    steps:
+      - name: Get latest release tag for Babelfish
+        id: get_babelfish_latest
+        run: |
+          BABELFISH_TAG=$(curl -s https://api.github.com/repos/babelfish-for-postgresql/babelfish-for-postgresql/releases/latest | jq -r '.tag_name')
+          echo "babelfish_tag=$BABELFISH_TAG" >> $GITHUB_OUTPUT
+          echo "Latest Babelfish release: $BABELFISH_TAG"
+
+      - name: Check if tag exists on Docker Hub
+        id: check_dockerhub_tag
+        run: |
+          DOCKERHUB_TAG_EXISTS=$(curl -sL https://hub.docker.com/v2/namespaces/jonathanpotts/repositories/babelfishpg/tags | jq -r --arg BABELFISH_TAG ${{ steps.get_babelfish_latest.outputs.babelfish_tag }} 'any(.results[]; .name==$BABELFISH_TAG)')
+          echo "dockerhub_tag_exists=$DOCKERHUB_TAG_EXISTS" >> $GITHUB_OUTPUT
+          echo "Docker Hub tag exists: $DOCKERHUB_TAG_EXISTS"
+
+  build:
+
+    needs: check
+    if: needs.check.outputs.dockerhub_tag_exists == 'false'
+    
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: docker build . -t jonathanpotts/babelfishpg:latest --build-arg BABELFISH_VERSION=${{ needs.check.outputs.babelfish_tag }}
+
+    - name: Tag Docker image
+      run: docker tag jonathanpotts/babelfishpg:latest jonathanpotts/babelfishpg:${{ needs.check.outputs.babelfish_tag }}
+
+    - name: Login to Docker Hub
+      run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push jonathanpotts/babelfishpg:${{ needs.check.outputs.babelfish_tag }}
+        docker push jonathanpotts/babelfishpg:latest
