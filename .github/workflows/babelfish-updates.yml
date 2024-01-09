@@ -53,21 +53,10 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
 
-    - name: Build and Push Docker image (x64)
+    - name: Build and Push Docker image
       uses: docker/build-push-action@v5
       with:
-        platforms: linux/amd64
-        tags: |
-          jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
-          jonathanpotts/babelfishpg:latest
-        build-args:
-          BABELFISH_VERSION=${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
-        push: true
-
-    - name: Build and Push Docker image (ARM64)
-      uses: docker/build-push-action@v5
-      with:
-        platforms: linux/arm64/v8
+        platforms: linux/amd64,linux/arm64
         tags: |
           jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
           jonathanpotts/babelfishpg:latest
