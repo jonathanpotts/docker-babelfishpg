@@ -58,8 +58,8 @@ jobs:
       with:
         platforms: linux/amd64,linux/arm64
         tags: |
-          jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+          jonathanpotts/babelfishpg:${{ needs.check.outputs.babelfish_tag }}
           jonathanpotts/babelfishpg:latest
         build-args:
-          BABELFISH_VERSION=${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
+          BABELFISH_VERSION=${{ needs.check.outputs.babelfish_tag }}
         push: true
