@@ -28,5 +28,6 @@ jobs:
           echo "Docker Hub tag exists: $DOCKERHUB_TAG_EXISTS"
 
   build:
+    if: needs.check.outputs.dockerhub_tag_exists == 'false'
     uses: ./.github/workflows/docker-image.yml
     secrets: inherit
