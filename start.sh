@@ -55,4 +55,4 @@ if [ ! -f ${BABELFISH_DATA}/postgresql.conf ]; then
 fi
 
 # Start postgres engine
-./postgres -D ${BABELFISH_DATA}/ -i
+exec ./postgres -D ${BABELFISH_DATA}/ -i
