@@ -1,12 +1,11 @@
 # Build stage
-FROM ubuntu:20.04
+FROM ubuntu:22.04 AS base
 
 # Specify babelfish version by using a tag from:
 # https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags
-ARG BABELFISH_VERSION=BABEL_2_3_0__PG_14_6
+ARG BABELFISH_VERSION=BABEL_5_2_0__PG_17_5
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV BABELFISH_HOME=/opt/babelfish
 
 # Install build dependencies
 RUN apt update && apt install -y --no-install-recommends\
@@ -14,10 +13,10 @@ RUN apt update && apt install -y --no-install-recommends\
 	libxslt-dev libssl-dev libreadline-dev zlib1g-dev\
 	libldap2-dev libpam0g-dev gettext uuid uuid-dev\
 	cmake lld apt-utils libossp-uuid-dev gnulib bison\
-	xsltproc icu-devtools libicu66\
+	xsltproc icu-devtools libicu70\
 	libicu-dev gawk\
-	curl openjdk-8-jre openssl\
-	g++ libssl-dev python-dev libpq-dev\
+	curl openjdk-21-jre openssl\
+	g++ libssl-dev python-dev-is-python3 libpq-dev\
 	pkg-config libutfcpp-dev\
 	gnupg unixodbc-dev net-tools unzip wget
 
@@ -33,6 +32,9 @@ RUN wget ${BABELFISH_URL}/releases/download/${BABELFISH_TAG}/${BABELFISH_FILE}
 RUN tar -xvzf ${BABELFISH_FILE}
 
 # Set environment variables
+ENV JOBS=4
+ENV BABELFISH_HOME=/opt/babelfish
+ENV PG_CONFIG=${BABELFISH_HOME}/bin/pg_config
 ENV PG_SRC=/workplace/${BABELFISH_VERSION}
 
 WORKDIR ${PG_SRC}
@@ -40,7 +42,7 @@ WORKDIR ${PG_SRC}
 ENV PG_CONFIG=${BABELFISH_HOME}/bin/pg_config
 
 # Compile ANTLR 4
-ENV ANTLR4_VERSION=4.9.3
+ENV ANTLR4_VERSION=4.13.2
 ENV ANTLR4_JAVA_BIN=/usr/bin/java
 ENV ANTLR4_RUNTIME_LIBRARIES=/usr/include/antlr4-runtime
 ENV ANTLR_FILE=antlr-${ANTLR4_VERSION}-complete.jar
@@ -63,7 +65,7 @@ WORKDIR ${ANTLR_RUNTIME}/build
 RUN cmake .. -D\
 	ANTLR_JAR_LOCATION=${ANTLR_EXECUTABLE}\
 	-DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
-RUN make && make install
+RUN make -j ${JOBS} && make install
 
 # Build modified PostgreSQL for Babelfish
 WORKDIR ${PG_SRC}
@@ -80,11 +82,11 @@ RUN ./configure CFLAGS="-ggdb"\
 	--with-icu\
 	--with-openssl
 					
-RUN make DESTDIR=${BABELFISH_HOME}/ 2>error.txt && make install
+RUN make DESTDIR=${BABELFISH_HOME}/ -j ${JOBS} 2>error.txt && make install
 
 WORKDIR ${PG_SRC}/contrib
 
-RUN make && make install
+RUN make -j ${JOBS} && make install
 
 # Compile the ANTLR parser generator
 RUN cp /usr/local/lib/libantlr4-runtime.so.${ANTLR4_VERSION}\
@@ -96,21 +98,22 @@ RUN make all
 
 # Compile the contrib modules and build Babelfish
 WORKDIR ${PG_SRC}/contrib/babelfishpg_common
-RUN make && make PG_CONFIG=${PG_CONFIG} install
+RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 
 WORKDIR ${PG_SRC}/contrib/babelfishpg_money
-RUN make && make PG_CONFIG=${PG_CONFIG} install
+RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 
 WORKDIR ${PG_SRC}/contrib/babelfishpg_tds
-RUN make && make PG_CONFIG=${PG_CONFIG} install
+RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 
 WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql
-RUN make && make PG_CONFIG=${PG_CONFIG} install
+RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 
 # Run stage
-FROM ubuntu:20.04
+FROM base
 ENV DEBIAN_FRONTEND=noninteractive
 ENV BABELFISH_HOME=/opt/babelfish
+ENV POSTGRES_USER_HOME=/var/lib/babelfish
 
 # Copy binaries to run stage
 WORKDIR ${BABELFISH_HOME}
@@ -118,19 +121,18 @@ COPY --from=0 ${BABELFISH_HOME} .
 
 # Install runtime dependencies
 RUN apt update && apt install -y --no-install-recommends\
-	libssl1.1 openssl libldap-2.4-2 libxml2 libpam0g uuid libossp-uuid16\
-	libxslt1.1 libicu66 libpq5 unixodbc
+	libssl3 openssl libldap-2.5-0 libxml2 libpam0g uuid libossp-uuid16\
+	libxslt1.1 libicu70 libpq5 unixodbc
 
 # Enable data volume
-ENV BABELFISH_DATA=/data/babelfish
-RUN mkdir /data
-VOLUME /data
-RUN mkdir ${BABELFISH_DATA}
+ENV BABELFISH_DATA=${POSTGRES_USER_HOME}/data
+RUN mkdir -p ${BABELFISH_DATA}
+VOLUME ${BABELFISH_DATA}
 
 # Create postgres user
-RUN adduser postgres --home ${BABELFISH_DATA}
-RUN chown postgres ${BABELFISH_DATA}
-RUN chmod 750 ${BABELFISH_DATA}
+RUN adduser postgres --home ${POSTGRES_USER_HOME}
+RUN chown -R postgres ${BABELFISH_HOME}
+RUN chown -R postgres ${POSTGRES_USER_HOME}
 
 # Change to postgres user
 USER postgres

@@ -1,6 +1,6 @@
 #!/bin/sh
 BABELFISH_HOME=/opt/babelfish
-BABELFISH_DATA=/data/babelfish
+BABELFISH_DATA=/var/lib/babelfish/data
 
 cd ${BABELFISH_HOME}/bin
 

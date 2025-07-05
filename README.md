@@ -49,7 +49,7 @@ Starting with the `2.3.0` image pushed on Mar 4, 2023, encryption (SSL) support 
 As a very basic example, to enable encryption with a *self-signed* certificate that *expires in 365 days* and has a *subject of localhost*, in the container's terminal run the following commands:
 
 ```sh
-cd /data/babelfish
+cd /var/lib/babelfish/data
 openssl req -new -x509 -days 365 -nodes -text -out server.crt -keyout server.key -subj "/CN=localhost"
 chmod og-rwx server.key
 echo "ssl = on" >> postgresql.conf
@@ -80,9 +80,12 @@ Assuming Babelfish is hosted on the local machine, using the default settings, a
 
 ## Data Volume
 
-Database data is stored in the `/data` volume.
+Database data is stored in the `/var/lib/babelfish/data` volume.
 
 ## Building Docker Image
+
+> [!IMPORTANT]
+> The Dockerfile was changed for `BABEL_5_2_0__PG_17_5`. To build an earlier version, the `before-BABEL_5_2_0__PG_17_5` branch should be used.
 
 To build the Docker image, clone the repository and then run `docker build .`.
 
@@ -92,6 +95,8 @@ To use a different Babelfish version, you can:
  * Run `docker build . --build-arg BABELFISH_VERSION=<BABELFISH_VERSION_TAG>`
 
 The Babelfish version tags are listed at https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags.
+
+
 
 ## Other Extensions
 
