@@ -1,5 +1,7 @@
-# Build stage
 FROM ubuntu:22.04 AS base
+
+# Build stage
+FROM base AS builder
 
 # Specify babelfish version by using a tag from:
 # https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags
@@ -110,14 +112,14 @@ WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql
 RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 
 # Run stage
-FROM base
+FROM base AS runner
 ENV DEBIAN_FRONTEND=noninteractive
 ENV BABELFISH_HOME=/opt/babelfish
 ENV POSTGRES_USER_HOME=/var/lib/babelfish
 
 # Copy binaries to run stage
 WORKDIR ${BABELFISH_HOME}
-COPY --from=0 ${BABELFISH_HOME} .
+COPY --from=builder ${BABELFISH_HOME} .
 
 # Install runtime dependencies
 RUN apt update && apt install -y --no-install-recommends\
