@@ -85,7 +85,7 @@ Database data is stored in the `/var/lib/babelfish/data` volume.
 ## Building Docker Image
 
 > [!IMPORTANT]
-> The Dockerfile was changed for `BABEL_5_2_0__PG_17_5`. To build an earlier version, the `before-BABEL_5_2_0__PG_17_5` branch should be used.
+> Breaking changes were made for `BABEL_5_2_0__PG_17_5`. To build an earlier version, the `before-BABEL_5_2_0__PG_17_5` branch should be used.
 
 To build the Docker image, clone the repository and then run `docker build .`.
 
