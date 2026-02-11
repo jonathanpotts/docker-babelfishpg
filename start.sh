@@ -37,6 +37,7 @@ if [ ! -f ${BABELFISH_DATA}/postgresql.conf ]; then
 		allow_system_table_mods = on
 		shared_preload_libraries = 'babelfishpg_tds'
 		babelfishpg_tds.listen_addresses = '*'  
+		babelfishpg_tsql.migration_mode = '${MIGRATION_MODE}'
 	EOF
 	./pg_ctl -D ${BABELFISH_DATA}/ start
 	./psql -c "CREATE USER ${USERNAME} WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '${PASSWORD}' INHERIT;" \
@@ -47,10 +48,12 @@ if [ ! -f ${BABELFISH_DATA}/postgresql.conf ]; then
 		-c "GRANT ALL ON SCHEMA sys to ${USERNAME};" \
 		-c "ALTER USER ${USERNAME} CREATEDB;" \
 		-c "ALTER SYSTEM SET babelfishpg_tsql.database_name = '${DATABASE}';" \
-		-c "SELECT pg_reload_conf();" \
-		-c "ALTER DATABASE ${DATABASE} SET babelfishpg_tsql.migration_mode = '${MIGRATION_MODE}';" \
-		-c "SELECT pg_reload_conf();" \
+		-c "SELECT pg_reload_conf();"
+
+	# After reloading to apply the migration_mode setting in postgresql.conf, initialize a new connection.
+	./psql -d ${DATABASE} \
 		-c "CALL SYS.INITIALIZE_BABELFISH('${USERNAME}');"
+
 	./pg_ctl -D ${BABELFISH_DATA}/ stop
 fi
 
