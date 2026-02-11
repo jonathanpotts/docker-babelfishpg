@@ -43,10 +43,10 @@ jobs:
     - name: Build and Push Docker image
       uses: docker/build-push-action@v5
       with:
-        platforms: linux/amd64,linux/arm64
+        platforms: ${{ github.event_name == 'pull_request' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
         tags: |
           jonathanpotts/babelfishpg:${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
           jonathanpotts/babelfishpg:latest
         build-args:
           BABELFISH_VERSION=${{ steps.get_babelfish_latest.outputs.babelfish_tag }}
-        push: true
+        push: ${{ github.event_name != 'pull_request' }}
