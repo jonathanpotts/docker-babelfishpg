@@ -127,15 +127,12 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 	libssl3 openssl libldap-2.5-0 libxml2 libpam0g uuid libossp-uuid16\
 	libxslt1.1 libicu70 libpq5 unixodbc
 
+RUN adduser postgres --home ${POSTGRES_USER_HOME}
+
 # Enable data volume
 ENV BABELFISH_DATA=${POSTGRES_USER_HOME}/data
 RUN mkdir -p ${BABELFISH_DATA}
 VOLUME ${BABELFISH_DATA}
-
-# Create postgres user
-RUN adduser postgres --home ${POSTGRES_USER_HOME}
-RUN chown -R postgres ${BABELFISH_HOME}
-RUN chown -R postgres ${POSTGRES_USER_HOME}
 
 # Change to postgres user
 USER postgres
