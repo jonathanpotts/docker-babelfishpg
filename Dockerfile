@@ -114,6 +114,8 @@ RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 FROM base AS runner
 ENV BABELFISH_HOME=/opt/babelfish
 ENV POSTGRES_USER_HOME=/var/lib/babelfish
+EXPOSE 1433 5432
+ENTRYPOINT [ "/start.sh" ]
 
 # Copy binaries to run stage
 WORKDIR ${BABELFISH_HOME}
@@ -138,9 +140,5 @@ RUN chown -R postgres ${POSTGRES_USER_HOME}
 # Change to postgres user
 USER postgres
 
-# Expose ports
-EXPOSE 1433 5432
-
 # Set entry point
 COPY start.sh /
-ENTRYPOINT [ "/start.sh" ]
