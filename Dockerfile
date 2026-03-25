@@ -131,7 +131,7 @@ RUN adduser postgres --home ${POSTGRES_USER_HOME}
 
 # Enable data volume
 ENV BABELFISH_DATA=${POSTGRES_USER_HOME}/data
-RUN mkdir -p ${BABELFISH_DATA}
+RUN install -d -o postgres -g postgres ${BABELFISH_DATA}
 VOLUME ${BABELFISH_DATA}
 
 # Change to postgres user
