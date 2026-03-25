@@ -83,18 +83,17 @@ RUN ./configure CFLAGS="-ggdb"\
 	--with-libxslt\
 	--with-icu\
 	--with-openssl
-					
+
 RUN make DESTDIR=${BABELFISH_HOME}/ -j ${JOBS} 2>error.txt && make install
 
 WORKDIR ${PG_SRC}/contrib
-
 RUN make -j ${JOBS} && make install
 
 # Compile the ANTLR parser generator
 RUN cp /usr/local/lib/libantlr4-runtime.so.${ANTLR4_VERSION}\
 	${BABELFISH_HOME}/lib
-					 
-WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql/antlr 
+
+WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql/antlr
 RUN cmake -Wno-dev .
 RUN make all
 
