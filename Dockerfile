@@ -117,10 +117,6 @@ ENV POSTGRES_USER_HOME=/var/lib/babelfish
 EXPOSE 1433 5432
 ENTRYPOINT [ "/start.sh" ]
 
-# Copy binaries to run stage
-WORKDIR ${BABELFISH_HOME}
-COPY --from=builder ${BABELFISH_HOME} .
-
 # Install runtime dependencies
 RUN export DEBIAN_FRONTEND=noninteractive && \
 	apt update && apt install -y --no-install-recommends\
@@ -129,13 +125,15 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 RUN adduser postgres --home ${POSTGRES_USER_HOME}
 
+# Copy binaries to run stage
+COPY --chmod=755 start.sh /
+WORKDIR ${BABELFISH_HOME}
+COPY --from=builder --chown=postgres ${BABELFISH_HOME} .
+
 # Enable data volume
 ENV BABELFISH_DATA=${POSTGRES_USER_HOME}/data
 RUN install -d -o postgres -g postgres ${BABELFISH_DATA}
 VOLUME ${BABELFISH_DATA}
 
-# Change to postgres user
+# Switch runtime user in container
 USER postgres
-
-# Set entry point
-COPY start.sh /
