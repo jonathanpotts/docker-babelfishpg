@@ -112,7 +112,6 @@ RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 
 # Run stage
 FROM base AS runner
-ENV DEBIAN_FRONTEND=noninteractive
 ENV BABELFISH_HOME=/opt/babelfish
 ENV POSTGRES_USER_HOME=/var/lib/babelfish
 
@@ -121,7 +120,8 @@ WORKDIR ${BABELFISH_HOME}
 COPY --from=builder ${BABELFISH_HOME} .
 
 # Install runtime dependencies
-RUN apt update && apt install -y --no-install-recommends\
+RUN export DEBIAN_FRONTEND=noninteractive && \
+	apt update && apt install -y --no-install-recommends\
 	libssl3 openssl libldap-2.5-0 libxml2 libpam0g uuid libossp-uuid16\
 	libxslt1.1 libicu70 libpq5 unixodbc
 
