@@ -11,7 +11,9 @@ Babelfish for PostgreSQL is a collection of [extensions](https://github.com/babe
 
 To create a new container, run:
 
-`docker run -d -p 1433:1433 jonathanpotts/babelfishpg`
+```
+docker run -d -p 1433:1433 jonathanpotts/babelfishpg
+```
 
 ### Example Data
 
