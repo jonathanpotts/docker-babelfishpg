@@ -83,18 +83,17 @@ RUN ./configure CFLAGS="-ggdb"\
 	--with-libxslt\
 	--with-icu\
 	--with-openssl
-					
+
 RUN make DESTDIR=${BABELFISH_HOME}/ -j ${JOBS} 2>error.txt && make install
 
 WORKDIR ${PG_SRC}/contrib
-
 RUN make -j ${JOBS} && make install
 
 # Compile the ANTLR parser generator
 RUN cp /usr/local/lib/libantlr4-runtime.so.${ANTLR4_VERSION}\
 	${BABELFISH_HOME}/lib
-					 
-WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql/antlr 
+
+WORKDIR ${PG_SRC}/contrib/babelfishpg_tsql/antlr
 RUN cmake -Wno-dev .
 RUN make all
 
@@ -113,35 +112,28 @@ RUN make -j ${JOBS} && make PG_CONFIG=${PG_CONFIG} install
 
 # Run stage
 FROM base AS runner
-ENV DEBIAN_FRONTEND=noninteractive
 ENV BABELFISH_HOME=/opt/babelfish
 ENV POSTGRES_USER_HOME=/var/lib/babelfish
-
-# Copy binaries to run stage
-WORKDIR ${BABELFISH_HOME}
-COPY --from=builder ${BABELFISH_HOME} .
+EXPOSE 1433 5432
+ENTRYPOINT [ "/start.sh" ]
 
 # Install runtime dependencies
-RUN apt update && apt install -y --no-install-recommends\
+RUN export DEBIAN_FRONTEND=noninteractive && \
+	apt update && apt install -y --no-install-recommends\
 	libssl3 openssl libldap-2.5-0 libxml2 libpam0g uuid libossp-uuid16\
 	libxslt1.1 libicu70 libpq5 unixodbc
 
+RUN adduser postgres --home ${POSTGRES_USER_HOME}
+
+# Copy binaries to run stage
+COPY --chmod=755 start.sh /
+WORKDIR ${BABELFISH_HOME}
+COPY --from=builder --chown=postgres ${BABELFISH_HOME} .
+
 # Enable data volume
 ENV BABELFISH_DATA=${POSTGRES_USER_HOME}/data
-RUN mkdir -p ${BABELFISH_DATA}
+RUN install -d -o postgres -g postgres ${BABELFISH_DATA}
 VOLUME ${BABELFISH_DATA}
 
-# Create postgres user
-RUN adduser postgres --home ${POSTGRES_USER_HOME}
-RUN chown -R postgres ${BABELFISH_HOME}
-RUN chown -R postgres ${POSTGRES_USER_HOME}
-
-# Change to postgres user
+# Switch runtime user in container
 USER postgres
-
-# Expose ports
-EXPOSE 1433 5432
-
-# Set entry point
-COPY start.sh /
-ENTRYPOINT [ "/start.sh" ]
