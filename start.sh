@@ -40,6 +40,10 @@ if [ ! -f ${BABELFISH_DATA}/postgresql.conf ]; then
 		babelfishpg_tsql.migration_mode = '${MIGRATION_MODE}'
 	EOF
 	./pg_ctl -D ${BABELFISH_DATA}/ start
+
+	# Set password for postgres
+	./psql -c "ALTER USER postgres WITH PASSWORD '${PASSWORD}';"
+
 	./psql -c "CREATE USER ${USERNAME} WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '${PASSWORD}' INHERIT;" \
 		-c "DROP DATABASE IF EXISTS ${DATABASE};" \
 		-c "CREATE DATABASE ${DATABASE} OWNER ${USERNAME};" \
