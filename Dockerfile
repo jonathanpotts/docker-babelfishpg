@@ -5,7 +5,7 @@ FROM base AS builder
 
 # Specify babelfish version by using a tag from:
 # https://github.com/babelfish-for-postgresql/babelfish-for-postgresql/tags
-ARG BABELFISH_VERSION=BABEL_5_2_0__PG_17_5
+ARG BABELFISH_VERSION=BABEL_6_1_0__PG_18_4
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -66,7 +66,8 @@ WORKDIR ${ANTLR_RUNTIME}/build
 
 RUN cmake .. -D\
 	ANTLR_JAR_LOCATION=${ANTLR_EXECUTABLE}\
-	-DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+	-DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True\
+	-DANTLR_BUILD_CPP_TESTS=OFF
 RUN make -j ${JOBS} && make install
 
 # Build modified PostgreSQL for Babelfish
@@ -85,6 +86,10 @@ RUN ./configure CFLAGS="-ggdb"\
 	--with-openssl
 
 RUN make DESTDIR=${BABELFISH_HOME}/ -j ${JOBS} 2>error.txt && make install
+
+# PG 18 no longer defines these, but babelfishpg_tds still checks for them
+RUN printf '\n#define HAVE_OPENSSL_INIT_SSL 1\n#define HAVE_BIO_METH_NEW 1\n'\
+	>> "$(${PG_CONFIG} --includedir-server)/pg_config.h"
 
 WORKDIR ${PG_SRC}/contrib
 RUN make -j ${JOBS} && make install
@@ -123,7 +128,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 	libssl3 openssl libldap-2.5-0 libxml2 libpam0g uuid libossp-uuid16\
 	libxslt1.1 libicu70 libpq5 unixodbc
 
-RUN adduser postgres --home ${POSTGRES_USER_HOME}
+RUN useradd -r -m -d "${POSTGRES_USER_HOME}" postgres
 
 # Copy binaries to run stage
 COPY --chmod=755 start.sh /
